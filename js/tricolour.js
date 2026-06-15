@@ -1,156 +1,114 @@
-// tricolour.js — Tri-Colour Mark & Sweep + Orchestrator
+// Tri-Colour Marking GC Implementation
+
 class HeapObject {
-  constructor(id, label, size) {
-    this.id = id;
-    this.label = label;
-    this.size = size;
-    this.colour = 'white'; // white | gray | black
-    this.references = [];
-  }
+    constructor(id, size, label) {
+        this.id = id;
+        this.size = size;
+        this.label = label;
+        this.references = [];
+        this.color = 'white'; // white, gray, black
+    }
+    
+    addReference(refId) {
+        this.references.push(refId);
+    }
 }
 
 class TriColourGC {
-  constructor() {
-    this.heap = new Map();
-    this.roots = new Set();
-    this.idCounter = 0;
-    this.stats = { freed: 0, freedBytes: 0, cycles: 0 };
-  }
-
-  allocate(label, size) {
-    const id = `obj_${++this.idCounter}`;
-    const obj = new HeapObject(id, label, size);
-    this.heap.set(id, obj);
-    console.log(`  ➕ Allocated: ${label} (${size} bytes)`);
-    return obj;
-  }
-
-  addRef(fromId, toId) {
-    this.heap.get(fromId).references.push(toId);
-  }
-
-  // ═══════════════════════════════════════════
-  // Phase 1: FIND ROOTS — Initialize white set
-  // ═══════════════════════════════════════════
-  findRoots() {
-    console.log(' Phase 1 — Find roots, reset colours');
-    for (const obj of this.heap.values()) {
-      obj.colour = 'white'; // Everything starts white
+    constructor() {
+        this.heap = new Map();
+        this.roots = new Set();
     }
-    // Roots go to gray (discovered but not processed)
-    for (const rootId of this.roots) {
-      const obj = this.heap.get(rootId);
-      if (obj) {
-        obj.colour = 'gray';
-        console.log(`  Root → GRAY: ${obj.label}`);
-      }
+    
+    allocate(id, size, label) {
+        const obj = new HeapObject(id, size, label);
+        this.heap.set(id, obj);
+        return obj;
     }
-  }
-
-  // ═══════════════════════════════════════════
-  // Phase 2: MARK — Process gray objects
-  // Tri-colour invariant: no black→white edges
-  // ═══════════════════════════════════════════
-  mark() {
-    console.log(' Phase 2 — Tri-colour marking');
-    let grayExists = true;
-
-    while (grayExists) {
-      grayExists = false;
-      for (const obj of this.heap.values()) {
-        if (obj.colour !== 'gray') continue;
-        grayExists = true;
-
-        // Process: mark children gray, self goes black
-        for (const refId of obj.references) {
-          const child = this.heap.get(refId);
-          if (child && child.colour === 'white') {
-            child.colour = 'gray';
-            console.log(` ${child.label} → GRAY`);
-          }
+    
+    addRoot(objId) {
+        this.roots.add(objId);
+    }
+    
+    /**
+     * Tri-colour marking algorithm:
+     * - White: Not yet visited (candidates for collection)
+     * - Gray: Visited but references not yet processed
+     * - Black: Fully processed (definitely reachable)
+     */
+    mark() {
+        // Step 1: Color all objects white
+        for (const obj of this.heap.values()) {
+            obj.color = 'white';
         }
-        obj.colour = 'black';
-        console.log(` ${obj.label} → BLACK (fully scanned)`);
-      }
+        
+        // Step 2: Color roots gray
+        const graySet = [];
+        for (const rootId of this.roots) {
+            const obj = this.heap.get(rootId);
+            if (obj) {
+                obj.color = 'gray';
+                graySet.push(obj);
+            }
+        }
+        
+        // Step 3: Process gray objects until none remain
+        while (graySet.length > 0) {
+            const current = graySet.pop();
+            current.color = 'black';
+            
+            for (const refId of current.references) {
+                const ref = this.heap.get(refId);
+                if (ref && ref.color === 'white') {
+                    ref.color = 'gray';
+                    graySet.push(ref);
+                }
+            }
+        }
     }
-  }
-
-  // ═══════════════════════════════════════════
-  // Phase 3: SWEEP — Free all white objects
-  // ═══════════════════════════════════════════
-  sweep() {
-    console.log(' Phase 3 — Sweep white objects');
-    const garbage = [];
-
-    for (const [id, obj] of this.heap) {
-      if (obj.colour === 'white') {
-        garbage.push(id);
-        this.stats.freedBytes += obj.size;
-        this.stats.freed++;
-        console.log(` Freed: ${obj.label} (${obj.size} bytes)`);
-      }
+    
+    sweep() {
+        let freed = 0;
+        for (const [id, obj] of this.heap.entries()) {
+            if (obj.color === 'white') {
+                this.heap.delete(id);
+                freed++;
+                console.log(`Freed: ${obj.label} (size: ${obj.size})`);
+            }
+        }
+        return freed;
     }
-
-    for (const id of garbage) this.heap.delete(id);
-    this.stats.cycles++;
-    return garbage.length;
-  }
-
-  // Full cycle: Find → Mark → Sweep
-  collect() {
-    console.log(`\n━━━ GC Cycle ${this.stats.cycles + 1} ━━━`);
-    this.findRoots();
-    this.mark();
-    const freed = this.sweep();
-    console.log(`Freed ${freed} objects`);
-    console.log(`Heap: ${this.heap.size} objects remaining\n`);
-    return this.getReport();
-  }
-
-  getReport() {
-    return {
-      timestamp: new Date().toISOString(),
-      heapSize: this.heap.size,
-      ...this.stats,
-    };
-  }
+    
+    collect() {
+        console.log('=== Starting Tri-Colour GC ===');
+        console.log(`Heap size before: ${this.heap.size}`);
+        
+        this.mark();
+        const freed = this.sweep();
+        
+        console.log(`Objects freed: ${freed}`);
+        console.log(`Heap size after: ${this.heap.size}`);
+        console.log('=== GC Complete ===');
+        
+        return freed;
+    }
+    
+    getStats() {
+        const colorCounts = { white: 0, gray: 0, black: 0 };
+        for (const obj of this.heap.values()) {
+            colorCounts[obj.color]++;
+        }
+        
+        return {
+            objectCount: this.heap.size,
+            totalSize: Array.from(this.heap.values()).reduce((sum, obj) => sum + obj.size, 0),
+            colorDistribution: colorCounts,
+            rootCount: this.roots.size
+        };
+    }
 }
 
-// ═══════════════════════════════════════════════
-// ORCHESTRATOR — Runs the GC loop automatically
-// ═══════════════════════════════════════════════
-async function orchestrate() {
-  const gc = new TriColourGC();
-
-  // Simulate: user opens Instagram
-  const tab = gc.allocate('BrowserTab', 128);
-  const app = gc.allocate('InstaApp', 256);
-  const profile = gc.allocate('ProfileView', 512);
-  const photo = gc.allocate('PhotoData', 1024);
-  const comments = gc.allocate('Comments', 320);
-  const oldAd = gc.allocate('ExpiredAd', 200);
-  const leaked = gc.allocate('LeakedWidget', 150);
-
-  gc.roots.add(tab.id);
-  gc.addRef(tab.id, app.id);
-  gc.addRef(app.id, profile.id);
-  gc.addRef(profile.id, photo.id);
-  gc.addRef(profile.id, comments.id);
-  // oldAd and leaked have NO path from root
-
-  // Cycle 1: Clean up unreachable objects
-  const report1 = gc.collect();
-
-  // Simulate: user closes the tab
-  console.log(' User closes the Instagram tab...');
-  gc.roots.delete(tab.id);
-
-  // Cycle 2: Everything becomes garbage
-  const report2 = gc.collect();
-
-  // Write reports
-  const reports = [report1, report2];
-  console.log(' Reports:', JSON.stringify(reports, null, 2));
+// Export for orchestrator
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { HeapObject, TriColourGC };
 }
-
-orchestrate();
