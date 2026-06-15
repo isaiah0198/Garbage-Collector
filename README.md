@@ -23,7 +23,7 @@ garbage-collector/
 ├── python/         ← Reference Counting + Cycle Detection
 │   └── ref_counter.py
 ├── js/             ← Tri-Color GC + Orchestrator
-│   └── tricolor.js
+│   └── tricolour.js
 ├── reports/        ← JSON output per GC run
 ├── .github/
 │   └── workflows/
