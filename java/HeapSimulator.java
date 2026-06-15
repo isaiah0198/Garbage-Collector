@@ -62,4 +62,37 @@ public class HeapSimulator {
             }
         }
     }
+    public void collectGarbage() {
+        System.out.println("\n━━━ GC Cycle ━━━");
+        findRoots();
+        mark();
+        int freed = sweep();
+        System.out.println("Reclaimed " + freed + " bytes");
+        System.out.println("Heap size: " + heap.size() + " objects\n");
+    }
+
+    public static void main(String[] args) {
+        HeapSimulator gc = new HeapSimulator();
+
+        // Simulate Instagram browsing
+        HeapObject tab = gc.allocate("BrowserTab", 128);
+        HeapObject profile = gc.allocate("ProfileView", 256);
+        HeapObject photo = gc.allocate("PhotoData", 512);
+        HeapObject bio = gc.allocate("UserBio", 64);
+        HeapObject comments = gc.allocate("CommentList", 320);
+        HeapObject oldCache = gc.allocate("OldCache", 1024);
+
+        gc.addRoot(tab.id);
+        gc.addReference(tab.id, profile.id);
+        gc.addReference(profile.id, photo.id);
+        gc.addReference(profile.id, bio.id);
+        gc.addReference(profile.id, comments.id);
+        // oldCache has NO root reference → it's garbage!
+
+        gc.collectGarbage(); // Will free oldCache
+
+        // Now "close the tab" — remove root
+        gc.roots.remove(tab.id);
+        gc.collectGarbage(); // Will free EVERYTHING
+    }
 }

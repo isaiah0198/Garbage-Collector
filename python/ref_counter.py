@@ -81,3 +81,56 @@ class RefCountGC:
                     self.heap[ref].ref_count -= 1
                     if self.heap[ref].ref_count == 0:
                         self.free(ref)
+
+    # ═══════════════════════════════════════════
+    # FULL CYCLE: Find → Detect Cycles → Free → Repeat
+    # ═══════════════════════════════════════════
+    def collect(self):
+        print("\n━━━ GC Cycle ━━━")
+        # Step 1: Free zero-ref objects
+        zeros = self.find_zero_refs()
+        for z in zeros:
+            if z in self.heap:
+                self._free(z)
+
+        # Step 2: Find cyclic garbage
+        cycles = self.detect_cycles()
+        for c in cycles:
+            if c in self.heap:
+                self._free(c)
+
+        print(f"Heap: {len(self.heap)} objects remaining")
+        print(f"Total freed: {self.total_freed} bytes\n")
+
+    # Compare with Python's built-in GC
+    def compare_with_builtin(self):
+        print("🐍 Python built-in gc.collect():")
+        collected = builtin_gc.collect()
+        print(f"   Built-in freed {collected} objects")
+
+
+if __name__ == "__main__":
+    gc = RefCountGC()
+
+    # Instagram scenario
+    tab = gc.allocate("BrowserTab", 128)
+    profile = gc.allocate("ProfileView", 256)
+    photo = gc.allocate("PhotoData", 512)
+    orphan = gc.allocate("OrphanWidget", 200)
+
+    gc.roots.add(tab.id)
+    gc.add_reference(tab.id, profile.id)
+    gc.add_reference(profile.id, photo.id)
+    # orphan has refs but no root path
+
+    # Create a cycle: A → B → A
+    cycle_a = gc.allocate("CycleA", 100)
+    cycle_b = gc.allocate("CycleB", 100)
+    gc.add_reference(cycle_a.id, cycle_b.id)
+    gc.add_reference(cycle_b.id, cycle_a.id)
+
+    gc.collect()  # Frees orphan + cycle
+
+    # Close the tab
+    gc.roots.discard(tab.id)
+    gc.collect()  # Frees everything
