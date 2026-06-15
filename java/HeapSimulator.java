@@ -19,7 +19,7 @@ public class HeapSimulator {
         }
     }
 
-    public HeapObject allocate(string label, int size) {
+    public HeapObject allocate(String label, int size) {
         String id = "obj_" + UUID.randomUUID().toString().substring(0, 8);
         HeapObject obj = new HeapObject(id, label, size);
         heap.put(id, obj);
@@ -38,5 +38,28 @@ public class HeapSimulator {
             System.out.println("Root: " + obj.label);
         }
         return roots;
+    }
+
+    private void mark() {
+        System.out.println("Marking reachable objects...");
+        for (HeapObject obj : heap.values()) obj.marked = false;
+
+        Queue<String> queue = new LinkedList<>(roots());
+        Set<String> visited = new HashSet<>();
+
+        while (!queue.isEmpty()) {
+            String id = queue.poll();
+            if (visited.contains(id)) continue;
+            visited.add(id);
+
+            HeapObject obj = heap.get(id);
+            if (obj == null) continue;
+            obj.marked = true;
+            System.out.println("Marked: " + obj.label);
+            
+            for (String ref : obj.references) {
+                if (!visited.contains(ref)) queue.add(ref);
+            }
+        }
     }
 }

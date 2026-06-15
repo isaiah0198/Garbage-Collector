@@ -1,15 +1,15 @@
-// tricolor.js — Tri-Color Mark & Sweep + Orchestrator
+// tricolour.js — Tri-Colour Mark & Sweep + Orchestrator
 class HeapObject {
   constructor(id, label, size) {
     this.id = id;
     this.label = label;
     this.size = size;
-    this.color = 'white'; // white | gray | black
+    this.colour = 'white'; // white | gray | black
     this.references = [];
   }
 }
 
-class TriColorGC {
+class TriColourGC {
   constructor() {
     this.heap = new Map();
     this.roots = new Set();
@@ -30,17 +30,40 @@ class TriColorGC {
   }
 
     findRoots() {
-    console.log('Phase 1 — Find roots, reset colors');
+    console.log('Phase 1 — Find roots, reset colours');
     for (const obj of this.heap.values()) {
-      obj.color = 'white'; // Everything starts white
+      obj.colour = 'white'; // Everything starts white
     }
     // Roots go to gray (discovered but not processed)
     for (const rootId of this.roots) {
       const obj = this.heap.get(rootId);
       if (obj) {
-        obj.color = 'gray';
+        obj.colour = 'gray';
         console.log(` Root → GRAY: ${obj.label}`);
       }
     }
   }
+
+  mark() {
+    console.log('Phase 2 — Mark reachable objects');
+    let grayExists = true;
+
+    while (grayExists) {
+      grayExists = false;
+      for (const obj of this.heap.values()) {
+        if (obj.colour === 'gray') continue;
+        grayExists = true;
+
+        for (const refId of obj.references) {
+          const child = this.heap.get(refId);
+          if (child && child.colour === 'white') {
+            child.colour = 'gray';
+            console.log(`  Marking: ${child.label} -> GRAY`);
+          }
+        }
+        obj.colour = 'black';
+        console.log(`  Marked: ${obj.label} → BLACK`);
+      }
+    }
+  }       
 }

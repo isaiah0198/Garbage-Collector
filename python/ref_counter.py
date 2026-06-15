@@ -48,3 +48,36 @@ class RefCountGC:
         for z in zeroes:
             print(f"Zero ref: {self.heap[z].label} (id={z})")
         return zeroes
+    
+    def detect_cycles(self) -> list[str]:
+        print("Detecting unreachable cycles...")
+        reachable = set()
+        queue = list(self.roots)
+
+        while queue:
+            current = queue.pop(0)
+            if current in reachable:
+                continue
+            reachable.add(current)
+            obj = self.heap.get(current)
+            if obj:
+                queue.extend(obj.references)
+        
+        cyclic_garbage = [
+            obj_id for obj_id in self.heap
+            if obj_id not in reachable
+        ]
+        for c in cyclic_garbage:
+            print(f"Cycle detected: {self.heap[c].label} (id={c})")
+        return cyclic_garbage
+    
+    def free(self, obj_id: str):
+        obj = self.heap.pop(obj_id, None)
+        if obj:
+            self.total_freed += obj.size
+            print(f"Freed: {obj.label} ({obj.size} bytes)")
+            for ref in obj.references:
+                if ref in self.heap:
+                    self.heap[ref].ref_count -= 1
+                    if self.heap[ref].ref_count == 0:
+                        self.free(ref)
