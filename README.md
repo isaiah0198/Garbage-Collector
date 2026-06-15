@@ -22,7 +22,7 @@ garbage-collector/
 │   └── HeapSimulator.java
 ├── python/         ← Reference Counting + Cycle Detection
 │   └── ref_counter.py
-├── js/             ← Tri-Color GC + Orchestrator
+├── js/             ← Tri-Colour GC + Orchestrator
 │   └── tricolour.js
 ├── reports/        ← JSON output per GC run
 ├── .github/
