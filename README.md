@@ -6,9 +6,7 @@ that keeps your RAM clean.
 
 ## Core Concept
 
-When you browse Instagram and view a profile, data loads into RAM.
-When you close the tab, that data becomes **unreachable**. The garbage
-collector finds these unreachable objects and frees the memory.
+The garbage collector finds information that is unreachable objects and frees the memory in the RAM.
 
 ```
 allocate → use → drop reference → GC finds unreachable → sweep → repeat
