@@ -43,7 +43,7 @@ jobs:
       - name: Run JS Orchestrator
         run: |
           cd js
-          node tricolor.js > ../reports/js-report.json
+          node tricolour.js > ../reports/js-report.json
 
       - name: Upload Reports
         uses: actions/upload-artifact@v4
