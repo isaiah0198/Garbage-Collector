@@ -6,7 +6,7 @@ class HeapObject {
         this.size = size;
         this.label = label;
         this.references = [];
-        this.color = 'white'; // white, gray, black
+        this.colour = 'white'; // white, gray, black
     }
     
     addReference(refId) {
@@ -37,17 +37,17 @@ class TriColourGC {
      * - Black: Fully processed (definitely reachable)
      */
     mark() {
-        // Step 1: Color all objects white
+        // Step 1: Colour all objects white
         for (const obj of this.heap.values()) {
-            obj.color = 'white';
+            obj.colour = 'white';
         }
         
-        // Step 2: Color roots gray
+        // Step 2: Colour roots gray
         const graySet = [];
         for (const rootId of this.roots) {
             const obj = this.heap.get(rootId);
             if (obj) {
-                obj.color = 'gray';
+                obj.colour = 'gray';
                 graySet.push(obj);
             }
         }
@@ -55,12 +55,12 @@ class TriColourGC {
         // Step 3: Process gray objects until none remain
         while (graySet.length > 0) {
             const current = graySet.pop();
-            current.color = 'black';
+            current.colour = 'black';
             
             for (const refId of current.references) {
                 const ref = this.heap.get(refId);
-                if (ref && ref.color === 'white') {
-                    ref.color = 'gray';
+                if (ref && ref.colour === 'white') {
+                    ref.colour = 'gray';
                     graySet.push(ref);
                 }
             }
@@ -70,7 +70,7 @@ class TriColourGC {
     sweep() {
         let freed = 0;
         for (const [id, obj] of this.heap.entries()) {
-            if (obj.color === 'white') {
+            if (obj.colour === 'white') {
                 this.heap.delete(id);
                 freed++;
                 console.log(`Freed: ${obj.label} (size: ${obj.size})`);
@@ -94,15 +94,15 @@ class TriColourGC {
     }
     
     getStats() {
-        const colorCounts = { white: 0, gray: 0, black: 0 };
+        const colourCounts = { white: 0, gray: 0, black: 0 };
         for (const obj of this.heap.values()) {
-            colorCounts[obj.color]++;
+            colourCounts[obj.colour]++;
         }
         
         return {
             objectCount: this.heap.size,
             totalSize: Array.from(this.heap.values()).reduce((sum, obj) => sum + obj.size, 0),
-            colorDistribution: colorCounts,
+            colourDistribution: colourCounts,
             rootCount: this.roots.size
         };
     }
