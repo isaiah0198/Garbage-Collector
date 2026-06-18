@@ -56,7 +56,7 @@ node tricolour.js
 |-----------|----------|----------|
 | Mark & Sweep | Java | BFS from roots, sweep unmarked |
 | Reference Counting | Python | Track ref counts, detect cycles |
-| Tri-Color | JavaScript | White/Gray/Black incremental marking |
+| Tri-Colour | JavaScript | White/Gray/Black incremental marking |
 
 ## The GC Loop
 
