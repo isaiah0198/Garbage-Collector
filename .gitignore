@@ -30,4 +30,5 @@ npm-debug.log*
 *.pem
 
 # Generated reports
-reports/*.txt
+reports/*
+!reports/.gitkeep
