@@ -1,0 +1,31 @@
+# macOS
+.DS_Store
+
+# VS Code / JetBrains
+.vscode/
+.idea/
+
+# Java
+*.class
+out/
+target/
+build/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# JavaScript
+node_modules/
+npm-debug.log*
+
+# Environment / secrets
+.env
+.env.*
+*.key
+*.pem
+
+# Generated reports
+reports/*.txt
