@@ -47,7 +47,7 @@ python ref_counter.py
 ### JavaScript
 ```bash
 cd js
-node tricolor.js
+node tricolour.js
 ```
 
 ## Algorithms

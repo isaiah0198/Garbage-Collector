@@ -1,5 +1,7 @@
-# macOS
+# macOS metadata
 .DS_Store
+__MACOSX/
+._*
 
 # VS Code / JetBrains
 .vscode/
